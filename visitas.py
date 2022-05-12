@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import sqlite3
 import datetime
 """
@@ -31,13 +32,10 @@ def ingresa_visita(persona, destino):
                         '{persona.apellido}',
                         '{persona.movil}');"""
         
-        r = f"""INSERT INTO ingresos_egresos (id, dni, fechahora_in, fechahora_out, destino)
-                VALUES ('{0}',
-                        '{persona.dni}',
+        r = f"""INSERT INTO ingresos_egresos (dni, fechahora_in, destino)
+                VALUES ('{persona.dni}',
                         '{datetime.datetime.now().replace(microsecond=0).isoformat()}',
-                        '{"undefined"}',
                         '{destino}');"""
-        
         print(q)
         print(r)
         conn.execute(q)
@@ -45,24 +43,18 @@ def ingresa_visita(persona, destino):
         conn.commit()
     conn.close()
 
-# from visitas import * 
-# carlos = Persona(222, "Gonzales", "Carlos", 341342)
-# ingresa_visita(carlos, "nueva delhi") 
-# egresa_visita(222)
-
-
 def egresa_visita (dni):
     """Coloca fecha y hora de egreso al visitante con dni dado"""
     conn = sqlite3.connect('recepcion.db')
     q = f"""SELECT dni FROM ingresos_egresos WHERE dni = '{dni}'"""
     resu = conn.execute(q)
     if resu.fetchone():
-        q = f"""INSERT INTO ingresos_egresos (fechahora_out) WHERE dni = '{dni}'
-                VALUES ('{datetime.datetime.now().replace(microsecond=0).isoformat()}');"""
+        q = f"""UPDATE ingresos_egresos SET fechahora_out = {datetime.datetime.now().replace(microsecond=0).isoformat()} WHERE dni = '{dni}'"""
         print(q)
         conn.execute(q)
         conn.commit()
         conn.close()
+
     else:
         print("No existe")
 
@@ -82,8 +74,14 @@ def lista_visitantes_en_institucion ():
 
 def busca_vistantes(fecha_desde, fecha_hasta, destino, dni):
     """ busca visitantes segun criterios """
-    pass
-
+    conn = sqlite3.connect('recepcion.db')
+    q = f"""SELECT * FROM ingresos_egresos WHERE dni = '{dni}' OR fechahora_in <= '{fecha_desde}' OR fechahora_out >= '{fecha_hasta}' OR destino = '{destino}'"""
+    resu = conn.execute(q)
+    if resu.fetchone():
+        print(resu)
+    else:
+        print("No existe esa persona")
+    conn.close()
 
 def iniciar():
     conn = sqlite3.connect('recepcion.db')
@@ -134,3 +132,8 @@ if __name__ == '__main__':
     
     # lista_visitantes_en_institucion()
 
+# from visitas import * 
+# carlos = Persona(222, "Gonzales", "Carlos", 341342)
+# ingresa_visita(carlos, "nueva delhi") 
+# egresa_visita(222)
+# busca_vistantes(202254174054, 0, "Hola", 222)
